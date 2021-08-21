@@ -571,7 +571,8 @@ do_exec_no_pty(Session *s, const char *command)
 	signal(WJSIGNAL, cray_job_termination_handler);
 #endif /* _UNICOS */
 #ifdef HAVE_CYGWIN
-	cygwin_set_impersonation_token(INVALID_HANDLE_VALUE);
+	if (is_winnt)
+		cygwin_set_impersonation_token(INVALID_HANDLE_VALUE);
 #endif
 
 	s->pid = pid;
@@ -725,7 +726,8 @@ do_exec_pty(Session *s, const char *command)
 	signal(WJSIGNAL, cray_job_termination_handler);
 #endif /* _UNICOS */
 #ifdef HAVE_CYGWIN
-	cygwin_set_impersonation_token(INVALID_HANDLE_VALUE);
+	if (is_winnt)
+		cygwin_set_impersonation_token(INVALID_HANDLE_VALUE);
 #endif
 
 	s->pid = pid;
@@ -1114,7 +1116,7 @@ do_setup_env(Session *s, const char *shell)
 	u_int i, envsize;
 	char **env, *laddr;
 	struct passwd *pw = s->pw;
-#if !defined (HAVE_LOGIN_CAP) && !defined (HAVE_CYGWIN)
+#ifndef HAVE_LOGIN_CAP
 	char *path = NULL;
 #endif
 
@@ -1548,6 +1550,9 @@ do_setusercontext(struct passwd *pw)
 #endif
 	}
 
+#ifdef HAVE_CYGWIN
+	if (is_winnt)
+#endif
 	if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
 		fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
 
